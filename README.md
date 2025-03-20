@@ -185,3 +185,114 @@ sudo apt install php8.4-mbstring -y
 > Restart PHP-FPM and Nginx   
 sudo systemctl restart php<version>-fpm
 sudo systemctl restart nginx
+
+
+______________________________________________________________________
+
+
+## 2️⃣ Download & Configure CodeIgniter 4
+
+Download CodeIgniter 4 using Composer, if you dont have [click here](https://getcomposer.org/download/) to install composer from official documantation.
+
+
+```sh
+composer create-project codeigniter4/appstarter my_project
+
+```
+
+### Move the project to /var/www/ and set permissions:
+
+```sh
+sudo mv my_project /var/www/codeigniter
+sudo chown -R www-data:www-data /var/www/codeigniter
+sudo chmod -R 755 /var/www/codeigniter
+
+````
+
+### Set environment variables:
+
+```sh
+cp /var/www/codeigniter/env /var/www/codeigniter/.env
+
+```
+
+Edit .env:
+>nano /var/www/codeigniter/.env
+
+Change:
+>CI_ENVIRONMENT = production
+
+And update database settings if needed:
+>database.default.hostname = localhost
+database.default.database = your_db
+database.default.username = your_user
+database.default.password = your_password
+
+_______________________________________________________________________________________________________
+
+
+
+## 3️⃣ Configure Nginx
+
+### Create a new Nginx site configuration:
+
+```sh
+sudo nano /etc/nginx/sites-available/codeigniter
+
+```
+
+### Add the following configuration:
+
+```nano
+
+server {
+    listen 80;
+    server_name yourdomain.com;
+    root /var/www/codeigniter/public;
+    index index.php index.html index.htm;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_pass unix:/run/php/php-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+        include fastcgi_params;
+    }
+
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot|ttf|otf|ttc|svgz|mp4|webm|ogv|zip|gz|rar|bz2|swf|flv|html|json|xml|rss|atom|txt|csv|pdf|doc|xls|ppt|tgz|tar|7z|bz2)$ {
+        expires max;
+        log_not_found off;
+    }
+
+    error_page 404 /index.php;
+}
+
+
+```
+
+
+### Enable the site:
+
+```sh
+
+sudo ln -s /etc/nginx/sites-available/codeigniter /etc/nginx/sites-enabled/
+
+```
+
+Test Nginx configuration:
+> sudo nginx -t
+
+
+Restart Nginx:
+>sudo systemctl restart nginx
+
+
+______________________________________________
+
+### Verify the Setup
+
+***Visit http://yourdomain.com or http://your_server_ip in your browser. You should see the CodeIgniter 4 Welcome Page***.
+
